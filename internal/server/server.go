@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/ericoliveiras/gate-guard/internal/config"
@@ -14,8 +15,13 @@ type Server struct {
 }
 
 func NewServer(config *config.Config) *Server {
+	conn, err := db.Init(config)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
 	return &Server{
-		DB:     db.Init(config),
+		DB:     conn,
 		Config: config,
 	}
 }
