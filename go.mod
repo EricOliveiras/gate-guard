@@ -8,4 +8,7 @@ require (
 	github.com/lib/pq v1.10.9
 )
 
-require github.com/DATA-DOG/go-sqlmock v1.5.0
+require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/google/uuid v1.3.1
+)
