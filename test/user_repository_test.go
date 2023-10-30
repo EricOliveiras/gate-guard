@@ -36,10 +36,10 @@ func TestUserRepository(t *testing.T) {
 			WithArgs(user.ID, user.FirstName, user.LastName, user.DocumentId, user.CreatedAt, user.UpdatedAt).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		ctx, cancel := setupTestWithContext(t, 5*time.Second)
+		ctx, cancel := setupUserRepoTestWithContext(t, 5*time.Second)
 		defer cancel()
 
-		err = repository.Create(ctx, user)
+		err = repository.Create(ctx, &user)
 
 		assert.NoError(t, err)
 	})
@@ -60,10 +60,43 @@ func TestUserRepository(t *testing.T) {
 			WithArgs(id).
 			WillReturnRows(rows)
 
-		ctx, cancel := setupTestWithContext(t, 5*time.Second)
+		ctx, cancel := setupUserRepoTestWithContext(t, 5*time.Second)
 		defer cancel()
 
 		user, err := repository.GetByID(ctx, id)
+
+		assert.NoError(t, err)
+		assert.Equal(t, id, user.ID)
+		assert.Equal(t, "Test", user.FirstName)
+		assert.Equal(t, "Test", user.LastName)
+		assert.Equal(t, "123456", user.DocumentId)
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("Expectations not met: %s", err)
+		}
+	})
+
+
+	t.Run("should return an user from database by document_id", func(t *testing.T) {
+		repository, mock, err := setupUserRepositoryTest(t)
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+		defer repository.DB.Close()
+
+		id := uuid.New()
+
+		rows := sqlmock.NewRows([]string{"id", "first_name", "last_name", "document_id"}).
+			AddRow(id, "Test", "Test", "123456")
+
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM users WHERE document_id = ?")).
+			WithArgs("123456").
+			WillReturnRows(rows)
+
+		ctx, cancel := setupUserRepoTestWithContext(t, 5*time.Second)
+		defer cancel()
+
+		user, err := repository.GetByDocumentID(ctx, "123456")
 
 		assert.NoError(t, err)
 		assert.Equal(t, id, user.ID)
@@ -98,10 +131,10 @@ func TestUserRepository(t *testing.T) {
 			DocumentId: "654321",
 		}
 
-		ctx, cancel := setupTestWithContext(t, 5*time.Second)
+		ctx, cancel := setupUserRepoTestWithContext(t, 5*time.Second)
 		defer cancel()
 
-		err = repository.Update(ctx, id, updateUser)
+		err = repository.Update(ctx, id, &updateUser)
 
 		assert.NoError(t, err)
 
@@ -126,7 +159,7 @@ func TestUserRepository(t *testing.T) {
 			WithArgs(id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		ctx, cancel := setupTestWithContext(t, 5*time.Second)
+		ctx, cancel := setupUserRepoTestWithContext(t, 5*time.Second)
 		defer cancel()
 
 		err = repository.Delete(ctx, id)
@@ -155,7 +188,7 @@ func setupUserRepositoryTest(t *testing.T) (userRepository *repository.UserRepos
 	return repository, mock, nil
 }
 
-func setupTestWithContext(t *testing.T, timeout time.Duration) (context.Context, context.CancelFunc) {
+func setupUserRepoTestWithContext(t *testing.T, timeout time.Duration) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 	return ctx, cancel
