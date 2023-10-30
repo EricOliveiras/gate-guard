@@ -24,7 +24,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-func (ur *UserRepository) Create(ctx context.Context, user model.User) error {
+func (ur *UserRepository) Create(ctx context.Context, user *model.User) error {
 	query := `
 		INSERT INTO users 
 			(id, first_name, last_name, document_id, created_at, updated_at) 
@@ -40,19 +40,32 @@ func (ur *UserRepository) Create(ctx context.Context, user model.User) error {
 	return nil
 }
 
-func (ur *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (model.User, error) {
+func (ur *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
 
 	query := "SELECT * FROM users WHERE id = ?"
 	err := ur.DB.GetContext(ctx, &user, query, id)
 	if err != nil {
-		return model.User{}, err
+		return &model.User{}, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
-func (ur *UserRepository) Update(ctx context.Context, id uuid.UUID, updateUser request.CreateUser) error {
+
+func (ur *UserRepository) GetByDocumentID(ctx context.Context, documentId string) (*model.User, error) {
+	var user model.User
+
+	query := "SELECT * FROM users WHERE document_id = ?"
+	err := ur.DB.GetContext(ctx, &user, query, documentId)
+	if err != nil {
+		return &model.User{}, err
+	}
+
+	return &user, nil
+}
+
+func (ur *UserRepository) Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) error {
 	query := "UPDATE users SET first_name = ?, last_name = ?, document_id = ? WHERE id = ?"
 	_, err := ur.DB.ExecContext(ctx, query, updateUser.FirstName, updateUser.LastName, updateUser.DocumentId, id)
 	if err != nil {
