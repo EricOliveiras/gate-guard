@@ -10,9 +10,10 @@ import (
 )
 
 type IUserRepository interface {
-	Create(ctx context.Context, user model.User) error
-	GetByID(ctx context.Context, id uuid.UUID) (model.User, error)
-	Update(ctx context.Context, id uuid.UUID, updateUser request.CreateUser) error
+	Create(ctx context.Context, user *model.User) error
+	GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	GetByDocumentID(ctx context.Context, document_id string) (*model.User, error)
+	Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
