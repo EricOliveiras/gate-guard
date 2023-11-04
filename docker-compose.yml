@@ -12,5 +12,17 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  test_db:
+    image: postgres
+    container_name: gate-guard-test-db
+    restart: always
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env.test
+    volumes:
+      - test_pgdata:/var/lib/postgresql/data
+
 volumes:
   pgdata:
+  test_pgdata:
