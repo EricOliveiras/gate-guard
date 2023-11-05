@@ -44,7 +44,7 @@ func (ur *UserRepository) Create(ctx context.Context, user *model.User) error {
 func (ur *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
 
-	query := "SELECT * FROM users WHERE id = ?"
+	query := "SELECT * FROM users WHERE id = $1"
 	err := ur.DB.GetContext(ctx, &user, query, id)
 	if err != nil {
 		return &model.User{}, err
@@ -57,7 +57,7 @@ func (ur *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Use
 func (ur *UserRepository) GetByDocumentID(ctx context.Context, documentId string) (*model.User, error) {
 	var user model.User
 
-	query := "SELECT * FROM users WHERE document_id = ?"
+	query := "SELECT * FROM users WHERE document_id = $1"
 	err := ur.DB.GetContext(ctx, &user, query, documentId)
 	if err != nil {
 		return &model.User{}, err
@@ -66,18 +66,23 @@ func (ur *UserRepository) GetByDocumentID(ctx context.Context, documentId string
 	return &user, nil
 }
 
-func (ur *UserRepository) Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) error {
-	query := "UPDATE users SET first_name = ?, last_name = ?, document_id = ? WHERE id = ?"
+func (ur *UserRepository) Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) (*model.User, error) {
+	query := "UPDATE users SET first_name = $1, last_name = $2, document_id = $3 WHERE id = $4"
 	_, err := ur.DB.ExecContext(ctx, query, updateUser.FirstName, updateUser.LastName, updateUser.DocumentId, id)
 	if err != nil {
-		return err
+		return &model.User{}, err
 	}
 
-	return nil
+	user, err := ur.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (ur *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := "DELETE FROM users WHERE id = ?"
+	query := "DELETE FROM users WHERE id = $1"
 	_, err := ur.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
