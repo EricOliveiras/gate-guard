@@ -15,15 +15,15 @@ type UserServiceWrapper interface {
 	Create(ctx context.Context, user *model.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	GetByDocumentID(ctx context.Context, document_id string) (*model.User, error)
-	Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) error
+	Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type UserService struct {
-	Repository repository.IUserRepository
+	Repository *repository.UserRepository
 }
 
-func NewUserService(repository repository.IUserRepository) *UserService {
+func NewUserService(repository *repository.UserRepository) *UserService {
 	return &UserService{Repository: repository}
 }
 
@@ -67,22 +67,22 @@ func (us *UserService) GetByDocumentID(ctx context.Context, document_id string) 
 	return user, nil
 }
 
-func (us *UserService) Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) error {
+func (us *UserService) Update(ctx context.Context, id uuid.UUID, updateUser *request.CreateUser) (*model.User, error) {
 	existingUser, err := us.Repository.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return &model.User{}, err
 	}
 
 	existingUser.FirstName = updateUser.FirstName
 	existingUser.LastName = updateUser.LastName
 	existingUser.DocumentId = updateUser.DocumentId
 
-	err = us.Repository.Update(ctx, id, updateUser)
+	user, err := us.Repository.Update(ctx, id, updateUser)
 	if err != nil {
-		return err
+		return &model.User{}, err
 	}
 
-	return nil
+	return user, nil
 }
 
 func (us *UserService) Delete(ctx context.Context, id uuid.UUID) error {
