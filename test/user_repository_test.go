@@ -2,8 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -12,14 +10,13 @@ import (
 	"github.com/ericoliveiras/gate-guard/internal/request"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUserRepository(t *testing.T) {
 	t.Run("should create an user in database", func(t *testing.T) {
-		repository, err := setupUserRepositoryTest(t)
+		repository, err := SetupUserRepositoryTest(t)
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -38,13 +35,13 @@ func TestUserRepository(t *testing.T) {
 
 		err = repository.Create(ctx, &user)
 
-		defer clearTable(t, repository.DB)
+		defer ClearTable(t, repository.DB)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("should return an user from database by id", func(t *testing.T) {
-		repository, err := setupUserRepositoryTest(t)
+		repository, err := SetupUserRepositoryTest(t)
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -68,7 +65,7 @@ func TestUserRepository(t *testing.T) {
 
 		getUser, err := repository.GetByID(ctx, user.ID)
 
-		defer clearTable(t, repository.DB)
+		defer ClearTable(t, repository.DB)
 
 		assert.NoError(t, err)
 		assert.Equal(t, user.ID, getUser.ID)
@@ -78,7 +75,7 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("should return an user from database by document_id", func(t *testing.T) {
-		repository, err := setupUserRepositoryTest(t)
+		repository, err := SetupUserRepositoryTest(t)
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -102,7 +99,7 @@ func TestUserRepository(t *testing.T) {
 
 		getUser, err := repository.GetByDocumentID(ctx, "123456")
 
-		defer clearTable(t, repository.DB)
+		defer ClearTable(t, repository.DB)
 
 		assert.NoError(t, err)
 		assert.Equal(t, user.ID, getUser.ID)
@@ -112,7 +109,7 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("should update an user from database", func(t *testing.T) {
-		repository, err := setupUserRepositoryTest(t)
+		repository, err := SetupUserRepositoryTest(t)
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -135,14 +132,14 @@ func TestUserRepository(t *testing.T) {
 		}
 
 		updateUser := request.CreateUser{
-			FirstName: "Test",
-			LastName: "Test",
+			FirstName:  "Test",
+			LastName:   "Test",
 			DocumentId: "654321",
 		}
 
 		updatingUser, err := repository.Update(ctx, user.ID, &updateUser)
-		
-		defer clearTable(t, repository.DB)
+
+		defer ClearTable(t, repository.DB)
 
 		assert.NoError(t, err)
 		assert.Equal(t, updateUser.FirstName, updatingUser.FirstName)
@@ -151,7 +148,7 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("should delete an user from database", func(t *testing.T) {
-		repository, err := setupUserRepositoryTest(t)
+		repository, err := SetupUserRepositoryTest(t)
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -174,28 +171,18 @@ func TestUserRepository(t *testing.T) {
 		}
 
 		err = repository.Delete(ctx, user.ID)
-		
-		defer clearTable(t, repository.DB)
+
+		defer ClearTable(t, repository.DB)
 
 		assert.NoError(t, err)
 	})
 }
 
-func setupUserRepositoryTest(t *testing.T) (*repository.UserRepository, error) {
-	err := godotenv.Load("../.env.test")
+func SetupUserRepositoryTest(t *testing.T) (*repository.UserRepository, error) {
+	driver, dsn, err := SetupDbTest()
 	if err != nil {
-		return nil, err
+		t.Fatalf("Erro: %v", err)
 	}
-
-	password := os.Getenv("DB_TEST_PASS")
-	driver := os.Getenv("DB_TEST_DRIVER")
-	user := os.Getenv("DB_TEST_USER")
-	name := os.Getenv("DB_TEST_NAME")
-	host := os.Getenv("DB_TEST_HOST")
-	port := os.Getenv("DB_TEST_PORT")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		host, user, password, name, port)
 
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
@@ -207,7 +194,7 @@ func setupUserRepositoryTest(t *testing.T) (*repository.UserRepository, error) {
 	return userRepository, nil
 }
 
-func clearTable(t *testing.T, db *sqlx.DB) {
+func ClearTable(t *testing.T, db *sqlx.DB) {
 	query := "DELETE FROM users"
 	_, err := db.Exec(query)
 	if err != nil {
