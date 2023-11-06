@@ -12,7 +12,7 @@ import (
 
 func TestDbConnection(t *testing.T) {
 	t.Run("should connect to database successfully", func(t *testing.T) {
-		driver, dsn, err := setupDbTest()
+		driver, dsn, err := SetupDbTest()
 		if err != nil {
 			t.Fatalf("Erro: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestDbConnection(t *testing.T) {
 	})
 }
 
-func setupDbTest() (string, string, error) {
+func SetupDbTest() (string, string, error) {
 	err := godotenv.Load("../.env.test")
 	if err != nil {
 		return "", "", err
